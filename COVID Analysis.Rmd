@@ -3,8 +3,9 @@ title: "COVID Analysis"
 author: "Jonathan Cummings"
 date: "7/17/2020"
 output:
-  html_document: default
-  word_document: default
+  html_document: 
+    keep_md: yes
+  fig_caption: true
 ---
 
 ```{r setup, include=FALSE}
@@ -148,10 +149,12 @@ The global prevalence is 1 in every `r comma(Global_Prevalence)` individuals hav
 Global_Prevalemce_Plot
 ```
 
+![Global Daily New Cases](figure/Global Daily Cases.PNG)  
+
 ### Global Deaths
 Currently the nation with the fewest per capita deaths is `r Least_Deaths$Country` at 1 in every `r comma(Least_Deaths$Mortality_Prevalence)` individuals.  
 The nation with the most per capita deaths is `r Most_Deaths$Country` at 1 in every `r comma(Most_Deaths$Mortality_Prevalence)` individuals.  
-Globally  1 in every `r comma(Global_Deaths_Prevalence)` individuals has died from COVID-19.  
+Globally  1 in every `r comma(Global_Deaths_Prevalence)` individuals have died from COVID-19.  
 1 in every `r comma(Cases_Per_Death)` individuals who have contracted COVID-19 have died, a death rate of `r Death_Rate`.  
 
 If the current death rate in each nation remains the same, then based on the number of currently active cases, i.e. without additional infections, the current global death toll of `r comma(Expected_Deaths[1])` would be expected to increase to `r comma(Expected_Deaths[2])`.
@@ -159,6 +162,14 @@ If the current death rate in each nation remains the same, then based on the num
 ```{r figure 3, warning=FALSE, message=FALSE, echo=FALSE, fig.cap="\\label Distribution of national COVID-19 death prevalence."}
 Global_Deaths_Plot
 ```
+
+![Global Daily New Deaths](figure/Global Daily Deaths.PNG)  
+
+![Financial Times COVID-19 Tracker - Deaths*](figure/7 Day Death Trend.PNG)  
+
+*[Financial Times COVID-19 Tracker link](https://www.ft.com/content/a26fbf7e-48f8-11ea-aeb3-955839e06441?fbclid=IwAR20L3uTETAJCy5X2qYMeyR_X6T8asbacJIgJ3zLnQXKszY-fcbl88V2ppM)  
+
+![Financial Times COVID-19 Tracker - Deaths in Selected Nations*](figure/Selected National Death Trend.PNG)
 
 ### Global Active Cases
 Currently their are `r Number_Without_Active_Cases` nations without any active cases of COVID-19. The most populous nation without any active cases is `r Most_Populous_Inactive`.  
@@ -169,9 +180,11 @@ The global prevalence is 1 in every `r comma(Global_Active_Prevalence)` individu
 Global_Active_Prevalemce_Plot
 ```
 
+![Financial Times COVID-19 Tracker - New Cases Selected Nations*](figure/Selected National Cases Trend.PNG)  
+
 ## United States of America Analyses
 ### National Status
-In the USA 1 in every `r comma(USA$Prevalence)` people has had a confirmed case of COVID-19, 1 in every `r comma(USA$Active_Prevalence)` has an active case, and 1 in every `r comma(USA$Mortality_Prevalence)` individuals has died.  The USA in ranked in position `r USA$Rank_Cases` for per capita cases, position `r USA$Rank_Active` for per capita active cases, and position `r USA$Rank_Deaths` for per capita deaths.
+In the USA 1 in every `r comma(USA$Prevalence)` people has had a confirmed case of COVID-19, 1 in every `r comma(USA$Active_Prevalence)` has an active case, and 1 in every `r comma(USA$Mortality_Prevalence)` individuals have died.  The USA in ranked in position `r USA$Rank_Cases` for per capita cases, position `r USA$Rank_Active` for per capita active cases, and position `r USA$Rank_Deaths` for per capita deaths.
 
 ```{r USA analysis, include=FALSE}
 #### -------------- Calculate summary statistics ------------------------- ####
@@ -206,11 +219,10 @@ USA_Most_Deaths<-USA_Covid_19 %>%
   select(State,Mortality_Prevalence)
 # USA death prevalence
 USA_Expected_Deaths<-USA_Covid_19 %>%
-  filter(State=="USA Total" ) %>% 
+  filter(State=="USA" ) %>% 
   select(Deaths,Expected_Deaths)
 USA_Death_Rate<-sprintf("%1.2f%%", 100*sum(USA_Covid_19$Deaths,na.rm=TRUE)/sum(USA_Covid_19$Cases))
 USA_Cases_Per_Death<-1/(sum(USA_Covid_19$Deaths,na.rm=TRUE)/sum(USA_Covid_19$Cases))
-comma(USA_Expected_Deaths[1])
 ```
 
 ``` {r USA analysis figures, include=FALSE}
@@ -231,7 +243,7 @@ USA_Plot<-ggplot(Covid_19_Zoom,aes(y=as.numeric(reorder(State,-Prevalence)),x=Pr
   theme_bw()+ylab("State")+xlab("Prevalence")+
   scale_fill_gradient(low="yellow",high="red")+xlim(0,zoom_threshold)+theme(legend.position = "none")+
   geom_text(aes(x=0, label = round(Prevalence)),size=3, hjust = "inward")+
-  facet_zoom(ylim = c(zoom_count+3.25,52))+
+  facet_zoom(ylim = c(zoom_count+3.25,52.5))+
   scale_y_continuous(breaks=1:length(Covid_19_Zoom$state),
                      label = levels(Covid_19_Zoom$state))+labs(title=paste("Cases",Sys.Date()-1))
 
@@ -252,7 +264,7 @@ USA_Death_Plot<-ggplot(Covid_19_Zoom_Death,aes(y=as.numeric(reorder(State,-Morta
   theme_bw()+ylab("State")+xlab("Prevalence")+
   scale_fill_gradient(low="yellow",high="red")+xlim(0,zoom_threshold_Death)+theme(legend.position = "none")+
   geom_text(aes(x=0, label = round(Mortality_Prevalence)),size=3, hjust = "inward")+
-  facet_zoom(ylim = c(zoom_count_Death+2.75,52))+
+  facet_zoom(ylim = c(zoom_count_Death+2.75,52.5))+
   scale_y_continuous(breaks=1:length(Covid_19_Zoom_Death$state),
                      label = levels(Covid_19_Zoom_Death$state))+labs(title=paste("Deaths",Sys.Date()-1))
 
@@ -274,7 +286,7 @@ USA_Active_Plot<-ggplot(Covid_19_Zoom_Active,aes(y=as.numeric(reorder(State,-Act
   theme_bw()+ylab("State")+xlab("Prevalence")+
   scale_fill_gradient(low="yellow",high="red")+xlim(0,zoom_threshold_Active)+theme(legend.position = "none")+
   geom_text(aes(x=0, label = round(Active_Prevalence)),size=3, hjust = "inward")+
-  facet_zoom(ylim = c(zoom_count_Active+3,52))+
+  facet_zoom(ylim = c(zoom_count_Active+3,52.5))+
   scale_y_continuous(breaks=1:length(Covid_19_Zoom_Active$state),
                      label = levels(Covid_19_Zoom_Active$state))+labs(title=paste("Active",Sys.Date()-1))
 ```
@@ -283,9 +295,9 @@ USA_Active_Plot<-ggplot(Covid_19_Zoom_Active,aes(y=as.numeric(reorder(State,-Act
 library(usmap)
 USA_Covid_19_Map<-USA_Covid_19 %>%
   select(State,Prevalence) %>%
-  filter(State!="USA Total") %>%
+  filter(State!="USA") %>%
   rename("state"="State")
-mid.prevalence<-max(USA_Covid_19_Map$Prevalence)/2
+mid.prevalence<-max(USA_Covid_19_Map$Prevalence,na.rm=T)/2
 USA_Map<-plot_usmap(data=USA_Covid_19_Map,values="Prevalence") +
   scale_fill_gradient2(low="red",mid = "yellow",high="green",
                        name="1 in every:",midpoint = mid.prevalence) +
@@ -293,9 +305,9 @@ USA_Map<-plot_usmap(data=USA_Covid_19_Map,values="Prevalence") +
 
 USA_Covid_19_Death_Map<-USA_Covid_19 %>%
   select(State,Mortality_Prevalence) %>%
-  filter(State!="USA Total") %>%
+  filter(State!="USA") %>%
   rename("state"="State")
-mid.prevalence.death<-max(USA_Covid_19_Death_Map$Mortality_Prevalence)/2
+mid.prevalence.death<-max(USA_Covid_19_Death_Map$Mortality_Prevalence,na.rm=T)/2
 USA_Death_Map<-plot_usmap(data=USA_Covid_19_Death_Map,values="Mortality_Prevalence") +
   scale_fill_gradient2(low="red",mid = "yellow",high="green",
                        name="1 in every:",midpoint = mid.prevalence.death) +
@@ -303,9 +315,9 @@ USA_Death_Map<-plot_usmap(data=USA_Covid_19_Death_Map,values="Mortality_Prevalen
 
 USA_Covid_19_Active_Map<-USA_Covid_19 %>%
   select(State,Active_Prevalence) %>%
-  filter(State!="USA Total") %>%
+  filter(State!="USA") %>%
   rename("state"="State")
-mid.prevalence.active<-max(USA_Covid_19_Active_Map$Active_Prevalence)/2
+mid.prevalence.active<-max(USA_Covid_19_Active_Map$Active_Prevalence,na.rm=T)/2
 USA_Active_Map<-plot_usmap(data=USA_Covid_19_Active_Map,values="Active_Prevalence") +
   scale_fill_gradient2(low="red",mid = "yellow",high="green",
                        name="1 in every:",midpoint = mid.prevalence.active) +
@@ -323,17 +335,21 @@ USA_Map
 USA_Plot
 ```
 
+
 ### USA Deaths
 Currently the state with the fewest per capita deaths is `r USA_Least_Deaths$State` at 1 in every `r comma(USA_Least_Deaths$Mortality_Prevalence)` individuals.  
 The state with the most per capita deaths is `r USA_Most_Deaths$State` at 1 in every `r comma(USA_Most_Deaths$Mortality_Prevalence)` individuals.  
 
-In the USA 1 in every `r comma(USA_Cases_Per_Death)` individuals who have contracted COVID-19 have died, a death rate of `r USA_Death_Rate`. If the current death rate remains the same, then based on the number of currently active cases, i.e. without additional infections, the current national death toll of `r comma(USA_Expected_Deaths$Deaths)` would be expected to increase to `r comma(USA_Expected_Deaths$Expected_Deaths)`.
+In the USA 1 in every `r comma(USA_Cases_Per_Death)` individuals who have contracted COVID-19 have died, a death rate of `r USA_Death_Rate`. If the current death rate remains the same, then based on the number of currently active cases, i.e. without additional infections, the current national death toll of `r comma(USA_Expected_Deaths$Deaths)` would be expected to increase to `r comma(USA_Expected_Deaths$Expected_Deaths)`.  
+
 ```{r figure 6, warning=FALSE, message=FALSE, echo=FALSE, fig.cap="\\label Map of Per Capita Deaths by State"}
 USA_Death_Map
 ```
 ```{r figure 7, warning=FALSE, message=FALSE, echo=FALSE, fig.cap="\\label Prevalence of Deaths by State"}
 USA_Death_Plot
 ```
+
+![Death Trends by State](figure/Selected State Deaths.PNG)  
 
 ### USA Active Cases
 Currently the state with the fewest per capita active cases is `r USA_Least_Active_Prevalent$State` at 1 in every `r comma(USA_Least_Active_Prevalent$Active_Prevalence)` individuals.  
@@ -346,12 +362,29 @@ USA_Active_Map
 USA_Active_Plot
 ```
 
+![Case Trends by State](figure/Selected State Cases.PNG)  
+
 ### Regional Analyses
 ```{r regional, warning=FALSE, echo=FALSE}
 plot_usmap(data=USA_Covid_19_Active_Map,values="Active_Prevalence",include = .new_england) +
   scale_fill_gradient2(low="red",mid = "yellow",high="green",name="1 in every:",midpoint = mid.prevalence.active) + theme(legend.position = "left")+
   labs(title="Prevalence of Active Cases In New England")
 ```
+
+![New England Case Trends by State](figure/New England Case Trend.PNG)  
+
+![New England Death Trends by State](figure/New England Death Trend.PNG)
+
+
+  
+### Local Exposure Risk
+There are also a number of resources available that are tracking how well COVID-19 is being controlled and the current status at a more local level. Two examples are [CovidActNow](https://covidactnow.org/) and [The Path to Zero](https://covidactnow.org/)  
+
+![Path to Zero county level risk](figure/New England County Risk.PNG)  
+
+![Number of active cases per town in NH](figure/NH Map of Active Cases.png)  
+
+![Number of active cases per town in southeastern NH by town](figure/NH Map of Active Cases zoomed.png)
 
 #### Status of Cases in the North versus the South
 One question I've become curious about is the status of cases in the North versus the South. I defined states in the north as those with major populaton centers north of D.C. and Kansas City, and those with population centers south of those cities as southern states.  
@@ -367,7 +400,7 @@ Covid_19_NorthSouth<-USA_Covid_19 %>%
 #   write.csv(file = "Covid-19_NorthSouth.csv")
 
 Covid_19_NorthSouth_Summary<-USA_Covid_19 %>%
-  filter(State!="USA Total") %>%
+  filter(State!="USA") %>%
   rename("CasesPerM"="Cases/1M",
          "DeathsPerM"="Deaths/1M",
          "TestsPerM"="Test/1M") %>%
@@ -409,3 +442,7 @@ Covid_19_NorthSouth_Summary %>%
   kable(format.args = list(big.mark = ",")) %>% 
   kable_styling()
 ```
+
+#Sources: 
+*Global and National and State Data* <https://www.worldometers.info/coronavirus/>
+*New Hampshire Data * [NHPR COVID-19 data tracking](https://www.nhpr.org/post/explore-data-tracking-covid-19-new-hampshire#stream/0)
