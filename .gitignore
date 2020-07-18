@@ -2,4 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-SomeCovidAnalyses.Rproj
+.Rproj
+Publish.R
+COVID Analysis.R
