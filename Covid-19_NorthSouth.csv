@@ -1,54 +1,54 @@
-"","State","NorthOrSouth"
-"1","New York","north"
-"2","New Jersey","north"
-"3","Illinois","north"
-"4","Massachusetts","north"
-"5","Pennsylvania","north"
-"6","Michigan","north"
-"7","Maryland","north"
-"8","Ohio","north"
-"9","Connecticut","north"
-"10","Indiana","north"
-"11","Minnesota","north"
-"12","Washington","north"
-"13","Colorado","north"
-"14","Iowa","north"
-"15","Wisconsin","north"
-"16","Utah","north"
-"17","Nebraska","north"
-"18","Rhode Island","north"
-"19","Delaware","north"
-"20","District Of Columbia","north"
-"21","Oregon","north"
-"22","South Dakota","north"
-"23","Idaho","north"
-"24","New Hampshire","north"
-"25","North Dakota","north"
-"26","Maine","north"
-"27","West Virginia","north"
-"28","Wyoming","north"
-"29","Vermont","north"
-"30","Montana","north"
-"31","California","south"
-"32","Texas","south"
-"33","Florida","south"
-"34","Georgia","south"
-"35","Arizona","south"
-"36","North Carolina","south"
-"37","Virginia","south"
-"38","Louisiana","south"
-"39","Tennessee","south"
-"40","Alabama","south"
-"41","South Carolina","south"
-"42","Mississippi","south"
-"43","Missouri","south"
-"44","Arkansas","south"
-"45","Nevada","south"
-"46","Kentucky","south"
-"47","Kansas","south"
-"48","Oklahoma","south"
-"49","New Mexico","south"
-"50","USA Total",NA
-"51","Alaska",NA
-"52","Hawaii",NA
-"53","Puerto Rico",NA
+,State,NorthOrSouth
+1,New York,north
+2,New Jersey,north
+3,Illinois,north
+4,Massachusetts,north
+5,Pennsylvania,north
+6,Michigan,north
+7,Maryland,north
+8,Ohio,north
+9,Connecticut,north
+10,Indiana,north
+11,Minnesota,north
+12,Washington,north
+13,Colorado,north
+14,Iowa,north
+15,Wisconsin,north
+16,Utah,north
+17,Nebraska,north
+18,Rhode Island,north
+19,Delaware,north
+20,District Of Columbia,north
+21,Oregon,north
+22,South Dakota,north
+23,Idaho,north
+24,New Hampshire,north
+25,North Dakota,north
+26,Maine,north
+27,West Virginia,north
+28,Wyoming,north
+29,Vermont,north
+30,Montana,north
+31,California,south
+32,Texas,south
+33,Florida,south
+34,Georgia,south
+35,Arizona,south
+36,North Carolina,south
+37,Virginia,south
+38,Louisiana,south
+39,Tennessee,south
+40,Alabama,south
+41,South Carolina,south
+42,Mississippi,south
+43,Missouri,south
+44,Arkansas,south
+45,Nevada,south
+46,Kentucky,south
+47,Kansas,south
+48,Oklahoma,south
+49,New Mexico,south
+50,USA,NA
+51,Alaska,NA
+52,Hawaii,NA
+53,Puerto Rico,NA
