@@ -1,0 +1,411 @@
+---
+title: "COVID Analysis"
+author: "Jonathan Cummings"
+date: "7/17/2020"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r get data, include=FALSE}
+library(readxl)
+library(tidyverse)
+# Set file location
+setwd("C:/Users/jcummings/OneDrive/Documents/Personal/COVID-19/SomeCovidAnalyses")
+
+# Get Global COVID-19 data
+Global_Covid_19 <- read_excel("C:/Users/jcummings/OneDrive/Documents/Personal/COVID-19/SomeCovidAnalyses/Covid-19.xlsx", sheet = "International") %>% 
+  mutate(Recovered = as.numeric(Recovered),
+         Active = as.numeric(Active))
+# rename columns
+Global_Covid_19<-Global_Covid_19 %>% 
+  rename("Prevalence"="1/#",
+         "Mortality_Prevalence"="1/# Deaths",
+         "Active_Prevalence"="1/# Active",
+         "Expected_Deaths"="Ex(Deaths)")
+
+USA_Covid_19<-read_excel("C:/Users/jcummings/OneDrive/Documents/Personal/COVID-19/SomeCovidAnalyses/Covid-19.xlsx", 
+                       sheet = "USA") 
+USA_Covid_19 <-USA_Covid_19 %>%
+  rename("Prevalence"="1/#",
+         "Mortality_Prevalence"="1/# Deaths",
+         "Active_Prevalence"="1/# Active",
+         "Expected_Deaths"="Ex(Deaths)") %>% 
+  filter(Prevalence>0)
+
+NorthSouth <- read_csv("Covid-19_NorthSouth.csv")
+USA_Covid_19 <- right_join(USA_Covid_19,NorthSouth,by="State")
+```
+
+# Some Covid Analyses
+
+What follows are the statistics and visualizations regarding COVID-19 that I find informative, important, or were just interesting to me to create as I learn more about data visualization. There are plenty of other analyses available, and analyses that come from disease experts, which I am not, so I encourage you to read and look at those as well!
+
+The analyses use data last updated on 7/17/2020.
+
+## Global Analyses
+```{r global analysis, include=FALSE}
+#### Functions ####
+# Create a function to format value outputs. Do not use scientfic formating, remove decimal places, and include a comma every factor of 1,000.
+comma<-function(x) {
+  format(x,scientific=FALSE,digits=0,big.mark=",")
+}
+
+#### -------------- Calculate summary statistics ------------------------- ####
+#### Total Cases ####
+# Nation with the fewest per capita cases
+Least_Prevalent<-Global_Covid_19 %>% 
+  filter(Prevalence==max(Global_Covid_19$Prevalence,na.rm=T)) %>% 
+  select(Country,Prevalence)
+# Nation with the most per capita cases
+Most_Prevalent<-Global_Covid_19 %>% 
+  filter(Prevalence==min(Global_Covid_19$Prevalence,na.rm=T)) %>% 
+  select(Country,Prevalence)
+# Global per capita cases
+Global_Prevalence<-sum(Global_Covid_19$Population)/sum(Global_Covid_19$Cases)
+# Rank by total cases
+Global_Covid_19<-Global_Covid_19 %>%
+  mutate(Rank_Cases=rank(Prevalence),
+         Rank_Active=rank(Active_Prevalence),
+         Rank_Deaths=rank(Mortality_Prevalence))
+
+#### Active Cases ####
+# Number of countries without active cases
+Number_Without_Active_Cases<-Global_Covid_19 %>% 
+  select(Active) %>% 
+  filter(Active==0) %>% 
+  count()
+# Most populous country without active cases
+Most_Populous_Inactive<-Global_Covid_19 %>% 
+  select(Active,Population,Country) %>% 
+  filter(Active==0) %>% 
+  top_n(1, Population) %>% 
+  select(Country)
+# Nation with the most per capita active cases
+Most_Active_Prevalent<-Global_Covid_19 %>% 
+  filter(Active_Prevalence==min(Global_Covid_19$Active_Prevalence,na.rm=T)) %>% 
+  select(Country,Active_Prevalence)
+# Global actice case prevalence
+Global_Active_Prevalence<-sum(Global_Covid_19$Population)/sum(Global_Covid_19$Active,na.rm=TRUE)
+
+#### Deaths ####
+# Nation with the fewest per capita deaths
+Least_Deaths<-Global_Covid_19 %>% 
+  filter(Mortality_Prevalence==max(Global_Covid_19$Mortality_Prevalence,na.rm=T)) %>% 
+  select(Country,Mortality_Prevalence)
+# Nation with the most per capita deaths
+Most_Deaths<-Global_Covid_19 %>% 
+  filter(Mortality_Prevalence==min(Global_Covid_19$Mortality_Prevalence,na.rm=T)) %>% 
+  select(Country,Mortality_Prevalence)
+# Global actice case prevalence
+Global_Deaths_Prevalence<-sum(Global_Covid_19$Population)/sum(Global_Covid_19$Deaths,na.rm=TRUE)
+Expected_Deaths<-c(sum(Global_Covid_19$Deaths,na.rm=TRUE),sum(Global_Covid_19$Expected_Deaths,na.rm=TRUE))
+Death_Rate<-sprintf("%1.2f%%", 100*sum(Global_Covid_19$Deaths,na.rm=TRUE)/sum(Global_Covid_19$Cases))
+Cases_Per_Death<-1/(sum(Global_Covid_19$Deaths,na.rm=TRUE)/sum(Global_Covid_19$Cases))
+
+#### Filter to USA ####
+USA<-Global_Covid_19 %>%
+  filter(Country=="USA")
+
+#### ------------ Create Figures --------------- ####
+hist_breaks<-c(0,10,25,50,100,250,500,1000,2500,5000,10000,25000,50000,100000,250000,500000,1000000)
+## Total Cases
+Global_Prevalemce_Plot<-ggplot(Global_Covid_19,aes(Prevalence))+geom_histogram(color="white",breaks=hist_breaks)+
+  geom_vline(xintercept=Global_Prevalence,color="black",size=1.5)+
+  geom_vline(xintercept=USA$Prevalence,color="red",size=1.5)+
+  annotate("label",x=Global_Prevalence,y=30,label="Global")+annotate("label",x=USA$Prevalence,y=30,label="USA")+
+  scale_x_log10(breaks=hist_breaks)+coord_flip()+theme_bw()+ggtitle("Histogram of confirmed case prevalence")+
+  ylab("Number of nations")
+## Active cases
+Global_Active_Prevalemce_Plot<-ggplot(Global_Covid_19,aes(Active_Prevalence))+
+  geom_histogram(color="white",breaks=hist_breaks)+
+  geom_vline(xintercept=Global_Active_Prevalence,color="black",size=1.5)+
+  geom_vline(xintercept=USA$Active_Prevalence,color="red",size=1.5)+
+  annotate("label",x=Global_Active_Prevalence,y=30,label="Global")+
+  annotate("label",x=USA$Active_Prevalence,y=30,label="USA")+
+  scale_x_log10(breaks=hist_breaks)+coord_flip()+theme_bw()+ggtitle("Histogram of national active case prevalence")+
+  ylab("Number of nations")+xlab("Active Case Prevalence")
+## Deaths
+Global_Deaths_Plot<-ggplot(Global_Covid_19,aes(Mortality_Prevalence))+
+  geom_histogram(color="white",breaks=hist_breaks)+
+  geom_vline(xintercept=Global_Deaths_Prevalence,color="black",size=1.5)+
+  geom_vline(xintercept=USA$Mortality_Prevalence,color="red",size=1.5)+
+  annotate("label",x=Global_Deaths_Prevalence,y=30,label="Global")+
+  annotate("label",x=USA$Mortality_Prevalence,y=30,label="USA")+
+  scale_x_log10(breaks=hist_breaks)+coord_flip()+theme_bw()+ggtitle("Histogram of national active case prevalence")+
+  ylab("Number of nations")+xlab("Death Prevalence")
+```
+### Global Total Cases
+Currently the nation with the fewest per capita confirmed cases is `r Least_Prevalent$Country` at 1 in every `r comma(Least_Prevalent$Prevalence)` individuals.  
+The nation with the most per capita confirmed cases is `r Most_Prevalent$Country` at 1 in every `r comma(Most_Prevalent$Prevalence)`.  
+The global prevalence is 1 in every `r comma(Global_Prevalence)` individuals have had a confirmed case of COVID-19.
+
+```{r figure 1, warning=FALSE, message=FALSE, echo=FALSE, fig.cap="\\label Distribution of national confirmed COVID-19 case prevalence."}
+Global_Prevalemce_Plot
+```
+
+### Global Deaths
+Currently the nation with the fewest per capita deaths is `r Least_Deaths$Country` at 1 in every `r comma(Least_Deaths$Mortality_Prevalence)` individuals.  
+The nation with the most per capita deaths is `r Most_Deaths$Country` at 1 in every `r comma(Most_Deaths$Mortality_Prevalence)` individuals.  
+Globally  1 in every `r comma(Global_Deaths_Prevalence)` individuals has died from COVID-19.  
+1 in every `r comma(Cases_Per_Death)` individuals who have contracted COVID-19 have died, a death rate of `r Death_Rate`.  
+
+If the current death rate in each nation remains the same, then based on the number of currently active cases, i.e. without additional infections, the current global death toll of `r comma(Expected_Deaths[1])` would be expected to increase to `r comma(Expected_Deaths[2])`.
+
+```{r figure 3, warning=FALSE, message=FALSE, echo=FALSE, fig.cap="\\label Distribution of national COVID-19 death prevalence."}
+Global_Deaths_Plot
+```
+
+### Global Active Cases
+Currently their are `r Number_Without_Active_Cases` nations without any active cases of COVID-19. The most populous nation without any active cases is `r Most_Populous_Inactive`.  
+The nation with the most per capita active cases is `r Most_Active_Prevalent$Country` at 1 in every `r comma(Most_Active_Prevalent$Active_Prevalence)` individuals.  
+The global prevalence is 1 in every `r comma(Global_Active_Prevalence)` individuals with an active case of COVID-19.
+
+```{r figure 2, warning=FALSE, message=FALSE, echo=FALSE, fig.cap="\\label Distribution of national active COVID-19 case prevalence."}
+Global_Active_Prevalemce_Plot
+```
+
+## United States of America Analyses
+### National Status
+In the USA 1 in every `r comma(USA$Prevalence)` people has had a confirmed case of COVID-19, 1 in every `r comma(USA$Active_Prevalence)` has an active case, and 1 in every `r comma(USA$Mortality_Prevalence)` individuals has died.  The USA in ranked in position `r USA$Rank_Cases` for per capita cases, position `r USA$Rank_Active` for per capita active cases, and position `r USA$Rank_Deaths` for per capita deaths.
+
+```{r USA analysis, include=FALSE}
+#### -------------- Calculate summary statistics ------------------------- ####
+#### Total Cases ####
+# State with the fewest per capita cases
+USA_Least_Prevalent<-USA_Covid_19 %>% 
+  filter(Prevalence==max(USA_Covid_19$Prevalence,na.rm=T)) %>% 
+  select(State,Prevalence)
+# State with the most per capita cases
+USA_Most_Prevalent<-USA_Covid_19 %>% 
+  filter(Prevalence==min(USA_Covid_19$Prevalence,na.rm=T)) %>% 
+  select(State,Prevalence)
+
+#### Active Cases ####
+# State with the least per capita active cases
+USA_Least_Active_Prevalent<-USA_Covid_19 %>% 
+  filter(Active_Prevalence==max(USA_Covid_19$Active_Prevalence,na.rm=T)) %>% 
+  select(State,Active_Prevalence)
+# State with the most per capita active cases
+USA_Most_Active_Prevalent<-USA_Covid_19 %>% 
+  filter(Active_Prevalence==min(USA_Covid_19$Active_Prevalence,na.rm=T)) %>% 
+  select(State,Active_Prevalence)
+
+#### Deaths ####
+# State with the fewest per capita deaths
+USA_Least_Deaths<-USA_Covid_19 %>% 
+  filter(Mortality_Prevalence==max(USA_Covid_19$Mortality_Prevalence,na.rm=T)) %>% 
+  select(State,Mortality_Prevalence)
+# State with the most per capita deaths
+USA_Most_Deaths<-USA_Covid_19 %>% 
+  filter(Mortality_Prevalence==min(USA_Covid_19$Mortality_Prevalence,na.rm=T)) %>% 
+  select(State,Mortality_Prevalence)
+# USA death prevalence
+USA_Expected_Deaths<-USA_Covid_19 %>%
+  filter(State=="USA Total" ) %>% 
+  select(Deaths,Expected_Deaths)
+USA_Death_Rate<-sprintf("%1.2f%%", 100*sum(USA_Covid_19$Deaths,na.rm=TRUE)/sum(USA_Covid_19$Cases))
+USA_Cases_Per_Death<-1/(sum(USA_Covid_19$Deaths,na.rm=TRUE)/sum(USA_Covid_19$Cases))
+comma(USA_Expected_Deaths[1])
+```
+
+``` {r USA analysis figures, include=FALSE}
+library(ggforce)
+Covid_19_Zoom<-USA_Covid_19  %>%
+  mutate(state=factor(State)) %>%
+  mutate(state=fct_reorder(state, -Prevalence, min))
+
+zoom_threshold<-200
+zoom_count<-52-Covid_19_Zoom %>% 
+  filter(Prevalence<zoom_threshold) %>% 
+  count()
+
+zoom_count <-as.numeric(zoom_count)
+
+USA_Plot<-ggplot(Covid_19_Zoom,aes(y=as.numeric(reorder(State,-Prevalence)),x=Prevalence))+
+  geom_col(aes(fill=-Prevalence))+
+  theme_bw()+ylab("State")+xlab("Prevalence")+
+  scale_fill_gradient(low="yellow",high="red")+xlim(0,zoom_threshold)+theme(legend.position = "none")+
+  geom_text(aes(x=0, label = round(Prevalence)),size=3, hjust = "inward")+
+  facet_zoom(ylim = c(zoom_count+3.25,52))+
+  scale_y_continuous(breaks=1:length(Covid_19_Zoom$state),
+                     label = levels(Covid_19_Zoom$state))+labs(title=paste("Cases",Sys.Date()-1))
+
+Covid_19_Zoom_Death<-USA_Covid_19  %>%
+  mutate(state=factor(State)) %>%
+  mutate(state=fct_reorder(state, -Mortality_Prevalence, min))
+
+zoom_threshold_Death<-5000
+zoom_count_Death<-52-Covid_19_Zoom_Death %>% 
+  filter(Mortality_Prevalence<zoom_threshold_Death) %>% 
+  count()
+
+zoom_count_Death <-as.numeric(zoom_count_Death)
+
+USA_Death_Plot<-ggplot(Covid_19_Zoom_Death,aes(y=as.numeric(reorder(State,-Mortality_Prevalence)),
+                                               x=Mortality_Prevalence))+
+  geom_col(aes(fill=-Mortality_Prevalence))+
+  theme_bw()+ylab("State")+xlab("Prevalence")+
+  scale_fill_gradient(low="yellow",high="red")+xlim(0,zoom_threshold_Death)+theme(legend.position = "none")+
+  geom_text(aes(x=0, label = round(Mortality_Prevalence)),size=3, hjust = "inward")+
+  facet_zoom(ylim = c(zoom_count_Death+2.75,52))+
+  scale_y_continuous(breaks=1:length(Covid_19_Zoom_Death$state),
+                     label = levels(Covid_19_Zoom_Death$state))+labs(title=paste("Deaths",Sys.Date()-1))
+
+
+Covid_19_Zoom_Active<-USA_Covid_19  %>%
+  mutate(state=factor(State)) %>%
+  mutate(state=fct_reorder(state, -Active_Prevalence, min))
+
+zoom_threshold_Active<-500
+zoom_count_Active<-52-Covid_19_Zoom_Active %>% 
+  filter(Active_Prevalence<zoom_threshold_Active) %>% 
+  count()
+
+zoom_count_Active<-as.numeric(zoom_count_Active)
+
+USA_Active_Plot<-ggplot(Covid_19_Zoom_Active,aes(y=as.numeric(reorder(State,-Active_Prevalence)),
+                                                 x=Active_Prevalence))+
+  geom_col(aes(fill=-Active_Prevalence))+
+  theme_bw()+ylab("State")+xlab("Prevalence")+
+  scale_fill_gradient(low="yellow",high="red")+xlim(0,zoom_threshold_Active)+theme(legend.position = "none")+
+  geom_text(aes(x=0, label = round(Active_Prevalence)),size=3, hjust = "inward")+
+  facet_zoom(ylim = c(zoom_count_Active+3,52))+
+  scale_y_continuous(breaks=1:length(Covid_19_Zoom_Active$state),
+                     label = levels(Covid_19_Zoom_Active$state))+labs(title=paste("Active",Sys.Date()-1))
+```
+
+```{r USA analysis maps, include=FALSE}
+library(usmap)
+USA_Covid_19_Map<-USA_Covid_19 %>%
+  select(State,Prevalence) %>%
+  filter(State!="USA Total") %>%
+  rename("state"="State")
+mid.prevalence<-max(USA_Covid_19_Map$Prevalence)/2
+USA_Map<-plot_usmap(data=USA_Covid_19_Map,values="Prevalence") +
+  scale_fill_gradient2(low="red",mid = "yellow",high="green",
+                       name="1 in every:",midpoint = mid.prevalence) +
+  labs(title="Case Prevalence")
+
+USA_Covid_19_Death_Map<-USA_Covid_19 %>%
+  select(State,Mortality_Prevalence) %>%
+  filter(State!="USA Total") %>%
+  rename("state"="State")
+mid.prevalence.death<-max(USA_Covid_19_Death_Map$Mortality_Prevalence)/2
+USA_Death_Map<-plot_usmap(data=USA_Covid_19_Death_Map,values="Mortality_Prevalence") +
+  scale_fill_gradient2(low="red",mid = "yellow",high="green",
+                       name="1 in every:",midpoint = mid.prevalence.death) +
+  labs(title="Death Prevalence")
+
+USA_Covid_19_Active_Map<-USA_Covid_19 %>%
+  select(State,Active_Prevalence) %>%
+  filter(State!="USA Total") %>%
+  rename("state"="State")
+mid.prevalence.active<-max(USA_Covid_19_Active_Map$Active_Prevalence)/2
+USA_Active_Map<-plot_usmap(data=USA_Covid_19_Active_Map,values="Active_Prevalence") +
+  scale_fill_gradient2(low="red",mid = "yellow",high="green",
+                       name="1 in every:",midpoint = mid.prevalence.active) +
+  labs(title="Prevalence of Active Cases")
+```
+
+### USA Total Cases
+Currently the state with the fewest per capita confirmed cases is `r USA_Least_Prevalent$State` at 1 in every `r comma(USA_Least_Prevalent$Prevalence)` individuals.  
+The nation with the most per capita confirmed cases is `r USA_Most_Prevalent$State` at 1 in every `r comma(USA_Most_Prevalent$Prevalence)`.  
+
+```{r figure 4, warning=FALSE, message=FALSE, echo=FALSE, fig.cap="\\label Map of Per Capita Confirmed Case Prevalence by State"}
+USA_Map
+```
+```{r figure 5, warning=FALSE, message=FALSE, echo=FALSE, fig.cap="\\label Prevalence of Active Cases by State"}
+USA_Plot
+```
+
+### USA Deaths
+Currently the state with the fewest per capita deaths is `r USA_Least_Deaths$State` at 1 in every `r comma(USA_Least_Deaths$Mortality_Prevalence)` individuals.  
+The state with the most per capita deaths is `r USA_Most_Deaths$State` at 1 in every `r comma(USA_Most_Deaths$Mortality_Prevalence)` individuals.  
+
+In the USA 1 in every `r comma(USA_Cases_Per_Death)` individuals who have contracted COVID-19 have died, a death rate of `r USA_Death_Rate`. If the current death rate remains the same, then based on the number of currently active cases, i.e. without additional infections, the current national death toll of `r comma(USA_Expected_Deaths$Deaths)` would be expected to increase to `r comma(USA_Expected_Deaths$Expected_Deaths)`.
+```{r figure 6, warning=FALSE, message=FALSE, echo=FALSE, fig.cap="\\label Map of Per Capita Deaths by State"}
+USA_Death_Map
+```
+```{r figure 7, warning=FALSE, message=FALSE, echo=FALSE, fig.cap="\\label Prevalence of Deaths by State"}
+USA_Death_Plot
+```
+
+### USA Active Cases
+Currently the state with the fewest per capita active cases is `r USA_Least_Active_Prevalent$State` at 1 in every `r comma(USA_Least_Active_Prevalent$Active_Prevalence)` individuals.  
+The state with the most per capita active cases is `r USA_Most_Active_Prevalent$State` at 1 in every `r comma(USA_Most_Active_Prevalent$Active_Prevalence)` individuals.
+
+```{r figure 8, warning=FALSE, message=FALSE, echo=FALSE, fig.cap="\\label Map of Per Capita Active Case Prevalence  by State"}
+USA_Active_Map
+```
+```{r figure 9, warning=FALSE, message=FALSE, echo=FALSE, fig.cap="\\label Prevalence of Active Cases by State"}
+USA_Active_Plot
+```
+
+### Regional Analyses
+```{r regional, warning=FALSE, echo=FALSE}
+plot_usmap(data=USA_Covid_19_Active_Map,values="Active_Prevalence",include = .new_england) +
+  scale_fill_gradient2(low="red",mid = "yellow",high="green",name="1 in every:",midpoint = mid.prevalence.active) + theme(legend.position = "left")+
+  labs(title="Prevalence of Active Cases In New England")
+```
+
+#### Status of Cases in the North versus the South
+One question I've become curious about is the status of cases in the North versus the South. I defined states in the north as those with major populaton centers north of D.C. and Kansas City, and those with population centers south of those cities as southern states.  
+
+``` {r NorthSouth, message=FALSE, warning=FALSE, echo=FALSE}
+Covid_19_NorthSouth<-USA_Covid_19 %>%
+  mutate(NorthOrSouth=factor(NorthOrSouth,levels = c("north","south"))) %>%
+  select(State,NorthOrSouth,Prevalence,Active_Prevalence) %>%
+  arrange(NorthOrSouth)
+
+# Covid_19_NorthSouth %>%
+#   select(State,NorthOrSouth) %>%
+#   write.csv(file = "Covid-19_NorthSouth.csv")
+
+Covid_19_NorthSouth_Summary<-USA_Covid_19 %>%
+  filter(State!="USA Total") %>%
+  rename("CasesPerM"="Cases/1M",
+         "DeathsPerM"="Deaths/1M",
+         "TestsPerM"="Test/1M") %>%
+  mutate(NorthOrSouth=fct_explicit_na(factor(NorthOrSouth,levels = c("north","south")))) %>%
+  group_by(NorthOrSouth) %>%
+  select_if(is.numeric) %>%
+  summarise(Cases=sum(Cases),
+            Deaths=sum(Deaths),
+            Active=sum(Active),
+            Tests=sum(Tests),
+            CasesPerM=mean(CasesPerM),
+            DeathsPerM=mean(DeathsPerM),
+            TestsPerM=mean(TestsPerM)) %>%
+  mutate(PercentActive=Active/Cases*100,
+         Prevalence=round(1000000/CasesPerM),
+         pop=Prevalence*Cases,
+         Active_Prevalence=round(pop/Active),
+         Death_Prevalence=round(1000000/DeathsPerM))
+
+ggplot(Covid_19_NorthSouth,aes(y=reorder(State,-Prevalence),x=Prevalence,fill=-Prevalence))+geom_col()+
+  facet_grid(NorthOrSouth~.,scale="free",space="free")+
+  ylab("State")+theme_bw()+xlab("1 in every")+xlim(0,750)+scale_fill_gradient(low="yellow",high="red")+
+  labs(title=paste("Cases",Sys.Date()-1))+theme(legend.position = "none")+
+  geom_text(data=Covid_19_NorthSouth_Summary[1:2,], aes(x=750,y=c(15.5,10),
+            label = paste("mean = ",Prevalence)),size=5, hjust = "inward")
+
+ggplot(Covid_19_NorthSouth,aes(y=reorder(State,-Active_Prevalence),x=Active_Prevalence))+geom_col(aes(fill=-Active_Prevalence))+
+  facet_grid(NorthOrSouth~.,scale="free",space="free")+
+  ylab("State")+theme_bw()+xlab("1 in every")+xlim(0,3250)+scale_fill_gradient(low="yellow",high="red")+
+  labs(title=paste("Active",Sys.Date()-1))+theme(legend.position = "none")+
+  geom_text(data=Covid_19_NorthSouth_Summary[1:2,], aes(x=3250,y=c(15.5,10),
+            label = paste("mean = ",Active_Prevalence)),size=5, hjust = "inward")
+
+library(kableExtra)
+Covid_19_NorthSouth_Summary %>%
+  select(NorthOrSouth,Active,Cases,Deaths,Active_Prevalence,Prevalence,Death_Prevalence,PercentActive) %>%
+  mutate(PercentActive=round(PercentActive,2)) %>% 
+  filter(NorthOrSouth=="north"|NorthOrSouth=="south") %>% 
+  kable(format.args = list(big.mark = ",")) %>% 
+  kable_styling()
+```
