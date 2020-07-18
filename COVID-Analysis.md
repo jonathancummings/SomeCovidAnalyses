@@ -152,6 +152,8 @@ One question I've become curious about is the status of cases in the North versu
 </tbody>
 </table>
 
-#Sources: 
-*Global and National and State Data* <https://www.worldometers.info/coronavirus/>
-*New Hampshire Data * [NHPR COVID-19 data tracking](https://www.nhpr.org/post/explore-data-tracking-covid-19-new-hampshire#stream/0)
+# Sources:  
+**Global, National and State Data** <https://www.worldometers.info/coronavirus/>  
+**New Hampshire Data** [NHPR COVID-19 data tracking](https://www.nhpr.org/post/explore-data-tracking-covid-19-new-hampshire#stream/0)  
+**Financial Times Images ** [Global Tracking](https://www.ft.com/content/a26fbf7e-48f8-11ea-aeb3-955839e06441) & [Trends](https://ig.ft.com/coronavirus-chart)  
+**Risk Status** [CovidActNow](https://covidactnow.org/) and [The Path to Zero](https://covidactnow.org/)
