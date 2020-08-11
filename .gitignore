@@ -8,3 +8,12 @@ COVID Analysis.R
 SomeCovidAnalyses.Rproj
 figure
 COVID-Analysis_files
+.csv
+covid_confirmed_usafacts.csv
+covid_deaths_usafacts.csv
+.gif
+US_Cases.gif
+State_population.csv
+US_Cases_Map.gif
+US_Deaths_Map.gif
+US_Deathss.gif
