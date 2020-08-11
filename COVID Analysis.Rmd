@@ -455,6 +455,103 @@ Covid_19_NorthSouth_Summary %>%
   kable_styling()
 ```
 
+```{r animation, message=FALSE, warning=FALSE, echo=FALSE}
+##### ---- Animated Total Cases and Deaths by day starting April 1st ---- #####
+
+#### -- Get Daily Data from USA Facts -- ####
+# Get state population data 
+State_population <- read_csv("State_population.csv")
+
+# Cases
+covid_confirmed_usafacts <- read_csv("covid_confirmed_usafacts.csv")
+ndays<-ncol(covid_confirmed_usafacts)
+
+US_Cases_County<-covid_confirmed_usafacts %>% 
+  pivot_longer(cols = c(5:ndays),names_to = "Date",values_to = "Cases") %>% 
+  mutate(Date=mdy(Date)) %>% 
+  filter(Date>= "2020-04-01")
+US_Cases_State<-US_Cases_County %>% 
+  group_by(State,Date) %>% 
+  summarise(Cases=sum(Cases)) %>% 
+  ungroup() %>% 
+  left_join(State_population) %>% 
+  mutate(Cases_Prevalence=Population/Cases) %>% 
+  mutate(Cases_Percent=Cases/Population) %>% 
+  arrange(Date, Cases_Percent) %>% 
+  mutate(order = 1:n()) %>% 
+  rename(State_abb=State,
+         state=Name)
+
+# Deaths
+covid_deaths_usafacts <- read_csv("covid_deaths_usafacts.csv")
+ndays<-ncol(covid_deaths_usafacts)
+US_Deaths_County<-covid_deaths_usafacts %>% 
+  pivot_longer(cols = c(5:ndays),names_to = "Date",values_to = "Deaths") %>% 
+  mutate(Date=mdy(Date)) %>% 
+  filter(Date>= "2020-04-01")
+US_Deaths_State<-US_Deaths_County %>% 
+  group_by(State,Date) %>% 
+  summarise(Deaths=sum(Deaths)) %>% 
+  ungroup() %>% 
+  left_join(State_population) %>% 
+  mutate(Deaths_Prevalence=Population/Deaths) %>% 
+  mutate(Deaths_Percent=Deaths/Population) %>% 
+  arrange(Date, Deaths_Percent) %>% 
+  mutate(order = 1:n()) %>% 
+  rename(State_abb=State,
+         state=Name) %>% 
+  na_if(Inf)
+
+#### -- Create Animations -- ####
+# Cases
+USA_Animated_Cases<-ggplot(US_Cases_State,aes(x=order,y=Cases_Percent))+
+  geom_col(aes(fill=Cases_Percent))+xlab("State")+ylab("Percent")+
+  geom_text(aes(y = Cases_Percent, label = State), vjust = -0.5)+
+  scale_y_continuous(labels=percent)+scale_x_continuous(breaks=US_Cases_State$order, labels=US_Cases_State$State_abb)+
+  scale_fill_viridis_c(option="magma")+theme_bw()+theme(legend.position = "none",axis.text.x=element_blank())+
+  # Here comes the gganimate code
+  transition_states(Date) + 
+  view_follow(fixed_y=TRUE)+
+  ease_aes('linear')+
+  ggtitle("Total Confirmed Cases as a Percentage of population on: {closest_state}")
+animate(USA_Animated_Cases, nframes = 2 * length(unique(US_Cases_State$Date)),height = 600, width =1000)
+anim_save("US_Cases.gif")
+
+USA_Animated_Cases_Map<-plot_usmap(data=US_Cases_State,values="Cases_Percent") +
+  scale_fill_viridis_c(option = "magma",name="Prevalence", labels = percent) +
+  theme(legend.position = "left",legend.title = element_text(size=15),legend.text = element_text(size=12),
+        plot.title = element_text(size=20))+
+  labs(title="Total Confirmed Cases as a Percenatage of Population on: {closest_state}")+
+  transition_states(Date)
+animate(USA_Animated_Cases_Map, nframes = 2*length(unique(US_Deaths_State$Date)),height = 600, width =800)
+anim_save("US_Cases_Map.gif")
+
+# Deaths
+USA_Animated_Deaths<-ggplot(US_Deaths_State,aes(x=order,y=Deaths_Percent))+
+  geom_col(aes(fill=Deaths_Percent))+xlab("State")+ylab("Percent")+
+  geom_text(aes(y = Deaths_Percent, label = State_abb), vjust = -0.5)+
+  scale_y_continuous(labels=percent)+scale_x_continuous(breaks=US_Deaths_State$order,labels=US_Deaths_State$State_abb)+
+  scale_fill_viridis_c(option="magma")+theme_bw()+theme(legend.position = "none",axis.text.x=element_blank())+
+  # Here comes the gganimate code
+  transition_states(Date) + 
+  view_follow(fixed_y=TRUE)+
+  ease_aes('linear')+
+  ggtitle("Total Deaths as a Percentage of Population on: {closest_state}")
+
+animate(USA_Animated_Deaths, nframes = 2 * length(unique(US_Cases_State$Date)),height = 600, width =1000)
+anim_save("US_Deathss.gif")
+
+
+USA_Animated_Deaths_Map<-plot_usmap(data=US_Deaths_State,values="Deaths_Percent") +
+  scale_fill_viridis_c(option = "magma",name="Prevalence", labels = percent)+
+  theme(legend.position = "left",legend.title = element_text(size=15),legend.text = element_text(size=12),
+        plot.title = element_text(size=20))+
+  labs(title="Total Deaths as Percenatage of Population on: {closest_state}")+
+  transition_states(Date)
+animate(USA_Animated_Deaths_Map, nframes = 2*length(unique(US_Deaths_State$Date)),height = 600, width =800)
+anim_save("US_Deaths_Map.gif")
+```
+
 # Sources:  
 **Global, National and State Data** <https://www.worldometers.info/coronavirus/>  
 **New Hampshire Data** [NHPR COVID-19 data tracking](https://www.nhpr.org/post/explore-data-tracking-covid-19-new-hampshire#stream/0)  
